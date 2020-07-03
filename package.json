@@ -1,0 +1,15 @@
+{
+  "name": "projectsbot",
+  "version": "1.0.0",
+  "description": "UrFU ProjectsBot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Glukhov Anton <qwe200030@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "config": "^3.3.1",
+    "telegraf": "^3.38.0"
+  }
+}
