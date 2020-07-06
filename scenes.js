@@ -1,4 +1,6 @@
 const Scene = require("telegraf/scenes/base");
+const WizardScene = require('telegraf/scenes/wizard')
+const mysql = require('mysql')
 
 class SceneGenerator {
   //Сцена "Документы"
@@ -43,10 +45,23 @@ class SceneGenerator {
 
   //Сцена "Запись на защиту"
   GenDefProjectsScene() {
-    const defprojects = new Scene("defprojects");
-    defprojects.enter((ctx) => {
-      ctx.replyWithHTML(`<b>Раздел ещё в разработке :(</b>`);
-    });
+    const defprojects = new WizardScene('defprojects',
+      ctx => {
+        ctx.reply('1. Напишите название команды: ')
+        ctx.wizard.next()
+      },
+      ctx => {
+        ctx.wizard.state.command = ctx.message.text
+        ctx.reply('2. Напишите желаемое время защиты (Формат - 00:00)')
+        ctx.wizard.next()
+      },
+      ctx => {
+        ctx.wizard.state.time = ctx.message.text.replace(' ', '')
+        ctx.reply('Ответ записан!')
+        connection.query(`INSERT INTO schedule (id, command, time) VALUES (NULL, '${ctx.wizard.state.command}', '${ctx.wizard.state.time}')`)
+        ctx.scene.leave()
+      }
+    )
     return defprojects;
   }
 }
