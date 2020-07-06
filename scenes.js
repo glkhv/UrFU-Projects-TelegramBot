@@ -2,6 +2,13 @@ const Scene = require("telegraf/scenes/base");
 const WizardScene = require('telegraf/scenes/wizard')
 const mysql = require('mysql')
 
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: 'root',
+  database: 'telegraf'
+})
+
 class SceneGenerator {
   //Сцена "Документы"
   GenDocumentsScene() {
