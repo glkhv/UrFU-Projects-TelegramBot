@@ -59,5 +59,5 @@ require("http").createServer(bot.webhookCallback(webHookServer)).listen(3000);
 
 bot.launch();
 
-//салют//
+//салют2//
 
