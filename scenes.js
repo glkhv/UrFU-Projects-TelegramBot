@@ -52,24 +52,62 @@ class SceneGenerator {
 
   //Сцена "Запись на защиту"
   GenDefProjectsScene() {
-    const defprojects = new WizardScene(
-      "defprojects",
+    
+    const stepHandler = new Composer()
+
+    const defprojects = new WizardScene('defprojects',
       (ctx) => {
-        ctx.reply("1. Напишите название команды: ");
-        ctx.wizard.next();
+        ctx.reply('1. Выберите направление: ', Markup.inlineKeyboard([
+          [Markup.callbackButton('application', 'application')],
+          [Markup.callbackButton('web', 'web')],
+          [Markup.callbackButton('ai/ml', 'aiml')],
+          [Markup.callbackButton('smm', 'smm')]
+        ]).extra())
+        ctx.wizard.next()
+      },
+      stepHandler.on('callback_query', ctx => {
+        ctx.wizard.state.data = ctx.update.callback_query.data
+        ctx.wizard.next()
+      }),
+      (ctx) => {
+        ctx.reply('2. Напишите название команды: ')
+        ctx.wizard.next()
       },
       (ctx) => {
-        ctx.wizard.state.command = ctx.message.text;
-        ctx.reply("2. Напишите желаемое время защиты (Формат - 00:00)");
-        ctx.wizard.next();
+        ctx.wizard.state.command = ctx.message.text
+        ctx.reply('3. Напишите желаемое время защиты (Формат - 00:00)')
+        ctx.wizard.next()
       },
       (ctx) => {
-        ctx.wizard.state.time = ctx.message.text.replace(" ", "");
-        ctx.reply("Ответ записан!");
-        connection.query(
-          `INSERT INTO schedule (id, command, time) VALUES (NULL, '${ctx.wizard.state.command}', '${ctx.wizard.state.time}')`
-        );
-        ctx.scene.leave();
+        ctx.wizard.state.time = ctx.message.text.replace(' ', '')
+
+        // dataTime = []
+        // connection.query("SELECT time FROM schedule", (err, res) => {
+        //   if(err) throw err
+
+        //   res.forEach(item => {
+        //     dataTime.push(
+        //       item.time.replace(':00','')
+        //     )
+        //   })
+
+        //   dataTime.forEach(elem => {
+        //     if(elem == ctx.wizard.state.time){
+        //       console.log('Ошибка епт');
+        //     }
+        //   })
+        //   console.log(dataTime)
+        // })
+
+
+        ctx.reply('Ответ записан!')
+
+        connection.connect(() => {
+          connection.query(`INSERT INTO schedule (id, command, data, time) VALUES (NULL, '${ctx.wizard.state.command}', '${ctx.wizard.state.data}', '${ctx.wizard.state.time}')`)
+          connection.query("SET SESSION wait_timeout = 604800");
+        })
+        ctx.scene.leave()
+        console.log(ctx.wizard.state)
       }
     );
     return defprojects;
