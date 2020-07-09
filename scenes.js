@@ -111,14 +111,25 @@ class SceneGenerator {
       (ctx) => {
         ctx.reply("2. Напишите название команды: ");
         ctx.wizard.next();
+        ctx.wizard.state.flag = true;
       },
       (ctx) => {
-        ctx.wizard.state.team = ctx.message.text;
         ctx.reply("3. Напишите желаемое время защиты (Формат - 00:00)");
         ctx.wizard.next();
+        if (ctx.wizard.state.flag) {
+          ctx.wizard.state.team = ctx.message.text;
+        }
       },
       (ctx) => {
         ctx.wizard.state.time = ctx.message.text.replace(" ", "");
+        
+        if (!regexp.test(ctx.wizard.state.time)) {
+          ctx.reply(
+            "Ошибка в формате времени 😾,\nвведите любой символ для продолжения"
+          );
+          ctx.wizard.back();
+          ctx.wizard.state.flag = false;
+        }
 
         // dataTime = []
         // connection.query("SELECT time FROM schedule", (err, res) => {
@@ -138,16 +149,18 @@ class SceneGenerator {
         //   console.log(dataTime)
         // })
 
-        ctx.reply("Ответ записан!");
+        else {
+          ctx.reply("Ответ записан!");
 
-        connection.connect(() => {
-          connection.query(
-            `INSERT INTO schedule (id, team, data, time) VALUES (NULL, '${ctx.wizard.state.team}', '${ctx.wizard.state.data}', '${ctx.wizard.state.time}')`
-          );
-          connection.query("SET SESSION wait_timeout = 604800");
-        });
-        ctx.scene.leave();
-        console.log(ctx.wizard.state);
+          connection.connect(() => {
+            connection.query(
+              `INSERT INTO schedule (id, team, data, time) VALUES (NULL, '${ctx.wizard.state.team}', '${ctx.wizard.state.data}', '${ctx.wizard.state.time}')`
+            );
+            connection.query("SET SESSION wait_timeout = 604800");
+          });
+          ctx.scene.leave();
+          console.log(ctx.wizard.state);
+        }
       }
     );
     return defprojects;
