@@ -1,5 +1,7 @@
 const Scene = require("telegraf/scenes/base");
 const WizardScene = require("telegraf/scenes/wizard");
+const Composer = require("telegraf/composer");
+const Markup = require("telegraf/markup");
 const mysql = require("mysql");
 
 const connection = mysql.createConnection({
@@ -34,10 +36,44 @@ class SceneGenerator {
 
   //Сцена "Контакты"
   GenContactsScene() {
-    const contacts = new Scene("contacts");
-    contacts.enter((ctx) => {
-      ctx.replyWithHTML(`<b>Раздел ещё в разработке :(</b>`);
-    });
+    const stepHandler = new Composer();
+
+    const contacts = new WizardScene(
+      "contacts",
+      (ctx) => {
+        ctx.reply(
+          "Чьи контакты тебе нужны?",
+          Markup.inlineKeyboard([
+            Markup.callbackButton("Ораганизаторы", "organizers"),
+            Markup.callbackButton("Куратор/Заказчик", "clients"),
+          ]).extra()
+        );
+        console.log(ctx.wizard.cursor);
+        ctx.wizard.next();
+      },
+      stepHandler.on("callback_query", (ctx) => {
+        ctx.wizard.state.contact_type = ctx.update.callback_query.data;
+        console.log(ctx.wizard.cursor);
+        console.log(ctx.wizard.state.contact_type);
+        ctx.wizard.next();
+      }),
+      (ctx) => {
+        console.log(ctx.wizard.cursor);
+        if (ctx.wizard.state.contact_type == "organizers") {
+          (ctx) => {
+            ctx.reply("Название команды:");
+            ctx.wizard.state.team = ctx.message.text;
+            console.log(ctx.wizard.state.wizard);
+          };
+          ctx.scene.leave();
+        } else {
+          (ctx) => {
+            ctx.reply("s");
+            ctx.scene.leave();
+          };
+        }
+      }
+    );
     return contacts;
   }
 
@@ -52,34 +88,37 @@ class SceneGenerator {
 
   //Сцена "Запись на защиту"
   GenDefProjectsScene() {
-    
-    const stepHandler = new Composer()
+    const stepHandler = new Composer();
 
-    const defprojects = new WizardScene('defprojects',
+    const defprojects = new WizardScene(
+      "defprojects",
       (ctx) => {
-        ctx.reply('1. Выберите направление: ', Markup.inlineKeyboard([
-          [Markup.callbackButton('application', 'application')],
-          [Markup.callbackButton('web', 'web')],
-          [Markup.callbackButton('ai/ml', 'aiml')],
-          [Markup.callbackButton('smm', 'smm')]
-        ]).extra())
-        ctx.wizard.next()
+        ctx.reply(
+          "1. Выберите направление: ",
+          Markup.inlineKeyboard([
+            [Markup.callbackButton("application", "application")],
+            [Markup.callbackButton("web", "web")],
+            [Markup.callbackButton("ai/ml", "aiml")],
+            [Markup.callbackButton("smm", "smm")],
+          ]).extra()
+        );
+        ctx.wizard.next();
       },
-      stepHandler.on('callback_query', ctx => {
-        ctx.wizard.state.data = ctx.update.callback_query.data
-        ctx.wizard.next()
+      stepHandler.on("callback_query", (ctx) => {
+        ctx.wizard.state.data = ctx.update.callback_query.data;
+        ctx.wizard.next();
       }),
       (ctx) => {
-        ctx.reply('2. Напишите название команды: ')
-        ctx.wizard.next()
+        ctx.reply("2. Напишите название команды: ");
+        ctx.wizard.next();
       },
       (ctx) => {
-        ctx.wizard.state.command = ctx.message.text
-        ctx.reply('3. Напишите желаемое время защиты (Формат - 00:00)')
-        ctx.wizard.next()
+        ctx.wizard.state.team = ctx.message.text;
+        ctx.reply("3. Напишите желаемое время защиты (Формат - 00:00)");
+        ctx.wizard.next();
       },
       (ctx) => {
-        ctx.wizard.state.time = ctx.message.text.replace(' ', '')
+        ctx.wizard.state.time = ctx.message.text.replace(" ", "");
 
         // dataTime = []
         // connection.query("SELECT time FROM schedule", (err, res) => {
@@ -99,15 +138,16 @@ class SceneGenerator {
         //   console.log(dataTime)
         // })
 
-
-        ctx.reply('Ответ записан!')
+        ctx.reply("Ответ записан!");
 
         connection.connect(() => {
-          connection.query(`INSERT INTO schedule (id, command, data, time) VALUES (NULL, '${ctx.wizard.state.command}', '${ctx.wizard.state.data}', '${ctx.wizard.state.time}')`)
+          connection.query(
+            `INSERT INTO schedule (id, team, data, time) VALUES (NULL, '${ctx.wizard.state.team}', '${ctx.wizard.state.data}', '${ctx.wizard.state.time}')`
+          );
           connection.query("SET SESSION wait_timeout = 604800");
-        })
-        ctx.scene.leave()
-        console.log(ctx.wizard.state)
+        });
+        ctx.scene.leave();
+        console.log(ctx.wizard.state);
       }
     );
     return defprojects;
