@@ -38,6 +38,23 @@ class SceneGenerator {
   GenContactsScene() {
     const stepHandler = new Composer();
 
+    stepHandler.action("clients", (ctx) => {
+      ctx.reply("Введи название своей команды:");
+      return ctx.wizard.next();
+    });
+    stepHandler.action("organizers", (ctx) => {
+      ctx.replyWithHTML(
+        `Вот здесь будет текст\n\n<b>Контакты организаторов курса "Проектный Практикум</b>":`,
+        Markup.inlineKeyboard([
+          Markup.urlButton(
+            "Написать Глухову Антону",
+            "https://t.me/double_telegram"
+          ),
+        ]).extra()
+      );
+      return ctx.scene.leave();
+    });
+
     const contacts = new WizardScene(
       "contacts",
       (ctx) => {
@@ -48,30 +65,15 @@ class SceneGenerator {
             Markup.callbackButton("Куратор/Заказчик", "clients"),
           ]).extra()
         );
-        console.log(ctx.wizard.cursor);
         ctx.wizard.next();
       },
-      stepHandler.on("callback_query", (ctx) => {
-        ctx.wizard.state.contact_type = ctx.update.callback_query.data;
-        console.log(ctx.wizard.cursor);
-        console.log(ctx.wizard.state.contact_type);
-        ctx.wizard.next();
-      }),
+      stepHandler,
       (ctx) => {
-        console.log(ctx.wizard.cursor);
-        if (ctx.wizard.state.contact_type == "organizers") {
-          (ctx) => {
-            ctx.reply("Название команды:");
-            ctx.wizard.state.team = ctx.message.text;
-            console.log(ctx.wizard.state.wizard);
-          };
-          ctx.scene.leave();
-        } else {
-          (ctx) => {
-            ctx.reply("s");
-            ctx.scene.leave();
-          };
-        }
+        ctx.wizard.state.team = ctx.message.text;
+        ctx.reply(
+          `Здесь должен был быть запрос в БД, который выводил бы инфу о кураторе, но Антону по**й, поэтому пока что просто лови название своей команды обратно - ${ctx.wizard.state.team}`
+        );
+        return ctx.scene.leave();
       }
     );
     return contacts;
@@ -96,10 +98,10 @@ class SceneGenerator {
         ctx.reply(
           "1. Выберите направление: ",
           Markup.inlineKeyboard([
-            [Markup.callbackButton("application", "application")],
-            [Markup.callbackButton("web", "web")],
-            [Markup.callbackButton("ai/ml", "aiml")],
-            [Markup.callbackButton("smm", "smm")],
+            [Markup.callbackButton("Application", "application")],
+            [Markup.callbackButton("Web", "web")],
+            [Markup.callbackButton("AI/ML", "aiml")],
+            [Markup.callbackButton("SMM", "smm")],
           ]).extra()
         );
         ctx.wizard.next();
@@ -122,7 +124,7 @@ class SceneGenerator {
       },
       (ctx) => {
         ctx.wizard.state.time = ctx.message.text.replace(" ", "");
-        
+
         if (!regexp.test(ctx.wizard.state.time)) {
           ctx.reply(
             "Ошибка в формате времени 😾\nВведите любой символ для продолжения"
@@ -148,7 +150,6 @@ class SceneGenerator {
         //   })
         //   console.log(dataTime)
         // })
-
         else {
           ctx.reply("Ответ записан!");
 
