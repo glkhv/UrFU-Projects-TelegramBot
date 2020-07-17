@@ -3,6 +3,10 @@ const Keyboard = require("telegraf-keyboard");
 const config = require("config");
 const SceneGenerator = require("./scenes");
 const { Extra, Markup, Stage, session, leave } = Telegraf;
+const defprojectSceneGenerate = require("./defproject-scene");
+const faqSceneGenerate = require("./faq-scene");
+const documentsSceneGenerate = require("./documents-scene");
+const contactsSceneGenerate = require("./contacts-scene");
 
 const token = config.get("token");
 const webHookServer = config.get("webHook");
@@ -15,18 +19,12 @@ mainKeyboard
   .add("Записаться на защиту")
   .add("Контакты", "FAQ");
 
-const curScene = new SceneGenerator();
-const documentsScene = curScene.GenDocumentsScene();
-const contactsScene = curScene.GenContactsScene();
-const faqScene = curScene.GenFAQScene();
-const defprojectScene = curScene.GenDefProjectsScene();
+const defproject = defprojectSceneGenerate();
+const faq = faqSceneGenerate();
+const documents = documentsSceneGenerate();
+const contacts = contactsSceneGenerate();
 
-const stage = new Stage([
-  documentsScene,
-  contactsScene,
-  faqScene,
-  defprojectScene,
-]);
+const stage = new Stage([documents, contacts, faq, defproject]);
 
 bot.start((ctx) => {
   return ctx.reply(
