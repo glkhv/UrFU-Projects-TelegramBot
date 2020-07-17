@@ -70,6 +70,10 @@ class SceneGenerator {
       stepHandler,
       (ctx) => {
         ctx.wizard.state.team = ctx.message.text;
+        connection.connect(() => {
+          connection.query(`SELECT name, surname, number FROM contacts`);
+          connection.query("SET SESSION wait_timeout = 604800");
+        });
         ctx.reply(
           `Здесь должен был быть запрос в БД, который выводил бы инфу о кураторе, но Антону по**й, поэтому пока что просто лови название своей команды обратно - ${ctx.wizard.state.team}`
         );
