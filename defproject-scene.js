@@ -73,7 +73,7 @@ function defprojectSceneGenerate() {
               console.log(ctx.wizard.state);
             } else if (res.some((elem) => elem.time == time)) {
               ctx.reply(
-                "К сожалению, это время уже занято\nвведите любой символ для продолжения"
+                "К сожалению, это время уже занято\nВведите любой символ для продолжения"
               );
               ctx.wizard.selectStep(2);
               ctx.wizard.state.flag = false;
