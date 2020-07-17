@@ -71,7 +71,12 @@ class SceneGenerator {
       (ctx) => {
         ctx.wizard.state.team = ctx.message.text;
         connection.connect(() => {
-          connection.query(`SELECT name, surname, number FROM contacts`);
+          connection.query(`SELECT * FROM contacts `, (err, res) => {
+            if (err) throw err;
+            ctx.replyWithHTML(
+              `Имя и фамилия куратора - <b>${res[0].name} ${res[0].surname}</b>\nТелефон - <b>${res[0].number}</b>`
+            );
+          });
           connection.query("SET SESSION wait_timeout = 604800");
         });
         ctx.reply(
