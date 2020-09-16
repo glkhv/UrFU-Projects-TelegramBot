@@ -14,6 +14,7 @@ const connection = mysql.createConnection({
 });
 
 connection.query("SELECT * FROM `schedule`", (err, res) => console.log(err));
+connection.query("SET SESSION wait_timeout = 604800");
 
 function cancelprojectSceneGenerate() {
     const stepHandler = new Composer();
@@ -26,9 +27,9 @@ function cancelprojectSceneGenerate() {
         },
         (ctx) => {
             ctx.wizard.state.team = ctx.message.text;
-            connection.query(`SELECT * FROM schedule WHERE team = '${ctx.wizard.state.team}'`, (err, res) => {
+            connection.query(`SELECT * FROM schedule WHERE team = '${ctx.wizard.state.team.toLowerCase()}'`, (err, res) => {
                 if (res[0] == undefined) {
-                    ctx.reply("Ну ка пшол отсюда, нет тут твоей команды дэбилов");
+                    ctx.replyWithHTML("❗️ Вашей команды нет в списке\n\n🔹<b>Выбери, что нужно:</b>");
                     ctx.scene.leave();
                 }
                 else {
@@ -40,12 +41,15 @@ function cancelprojectSceneGenerate() {
         (ctx) => {
             if (ctx.message.text.toLowerCase() == "да") {
                 connection.query(`DELETE FROM schedule WHERE team = '${ctx.wizard.state.team}'`, (err, res) => {
-                    ctx.reply("Ваша запись удалена...");
-                    console.log(res);
+                    ctx.replyWithHTML("Ваша запись удалена...\n\n🔹<b>Выбери, что нужно:</b>");
                 });
             }
-            if (ctx.message.text.toLowerCase() == "нет") {
-                ctx.reply("Ну так если нет, то чо нажал сюда?");
+            else if (ctx.message.text.toLowerCase() == "нет") {
+                ctx.replyWithHTML("Так зачем нажал тогда?...\nЯ ухожу...\n\n🔹<b>Выбери, что нужно:</b>");
+            }
+            else {
+                ctx.replyWithPhoto({ source: 'кот.jpg' });
+                // ctx.replyWithHTML("Запись не удалена...\n\n🔹<b>Выбери, что нужно:</b>")
             }
             ctx.scene.leave();
         }
