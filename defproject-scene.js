@@ -10,8 +10,11 @@ const connection = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "root",
-  database: "telegraf",
+  database: "practice",
 });
+
+connection.query("SELECT * FROM `schedule`", (err, res) => console.log(err));
+connection.query("SET SESSION wait_timeout = 604800");
 
 function defprojectSceneGenerate() {
   const stepHandler = new Composer();
@@ -40,18 +43,33 @@ function defprojectSceneGenerate() {
       if (ctx.wizard.state.flag) {
         ctx.wizard.state.team = ctx.message.text;
       }
-      ctx.reply("3. Напишите желаемое время защиты (Формат - 00:00)");
-      ctx.wizard.next();
+      connection.query(`SELECT * FROM schedule WHERE team = '${ctx.wizard.state.team}'`, (err, res) => {
+        if (err) throw err;
+        if (res[0] != undefined) {
+          ctx.replyWithHTML("❗️ Ваша команда уже создана\nПосмотрите свою запись\n\n🔹<b>Выбери, что нужно:</b>");
+          ctx.scene.leave();
+          return false;
+        }
+        else {
+          ctx.replyWithHTML("3. Напишите желаемое время защиты (<b>Формат - 00:00</b>)\n\n❗️ Или напишите \"Выйти\", если хотите выйти из записи на защиту");
+          ctx.wizard.next();
+        }
+      });
     },
     (ctx) => {
+      if (ctx.message.text.replace(" ", "").toLowerCase() == 'выйти') {
+        ctx.replyWithHTML("🔹<b>Выбери, что нужно:</b>");
+        ctx.scene.leave();
+        return false;
+      }
       ctx.wizard.state.time = ctx.message.text.replace(" ", "");
       const data = ctx.wizard.state.data;
       let time = ctx.wizard.state.time;
       const regexp = /\d{2}:\d{2}/;
 
       if (!regexp.test(ctx.wizard.state.time)) {
-        ctx.reply(
-          "Ошибка в формате времени 😾,\nвведите любой символ для продолжения"
+        ctx.replyWithHTML(
+          "Ошибка в формате времени 😾,\n\n<i>Введите любой символ для продолжения</i>"
         );
         ctx.wizard.selectStep(2);
         ctx.wizard.state.flag = false;
@@ -59,7 +77,6 @@ function defprojectSceneGenerate() {
         connection.query(
           `SELECT time FROM schedule WHERE data = '${data}'`,
           (err, res) => {
-            console.log(res);
             if (res.length == 0) {
               ctx.reply("Ответ записан!");
 
@@ -67,25 +84,21 @@ function defprojectSceneGenerate() {
                 connection.query(
                   `INSERT INTO schedule (id, team, data, time) VALUES (NULL, '${ctx.wizard.state.team}', '${ctx.wizard.state.data}', '${ctx.wizard.state.time}')`
                 );
-                connection.query("SET SESSION wait_timeout = 604800");
               });
               ctx.scene.leave();
-              console.log(ctx.wizard.state);
             } else if (res.some((elem) => elem.time == time)) {
-              ctx.reply(
-                "К сожалению, это время уже занято\nВведите любой символ для продолжения"
+              ctx.replyWithHTML(
+                `К сожалению, это время уже занято 😾\n<b>Время должно отличаться на 15 минут</b>\n\n❗️ Или проверьте на http://site, что вы ранее не записывались на данное время\n\n<i>Введите любой символ для продолжения</i>`
               );
               ctx.wizard.selectStep(2);
               ctx.wizard.state.flag = false;
             } else {
-              ctx.reply("Ответ записан!");
+              ctx.replyWithHTML("Ответ записан!\n\n🔹<b>Выбери, что нужно:</b>");
 
               connection.query(
                 `INSERT INTO schedule (id, team, data, time) VALUES (NULL, '${ctx.wizard.state.team}', '${ctx.wizard.state.data}', '${ctx.wizard.state.time}')`
               );
-              connection.query("SET SESSION wait_timeout = 604800");
               ctx.scene.leave();
-              console.log(ctx.wizard.state);
             }
           }
         );
