@@ -14,6 +14,7 @@ const connection = mysql.createConnection({
 });
 
 connection.query("SELECT * FROM `schedule`", (err, res) => console.log(err));
+connection.query("SET SESSION wait_timeout = 604800");
 
 function checkprojectSceneGenerate() {
     const stepHandler = new Composer();
@@ -26,13 +27,13 @@ function checkprojectSceneGenerate() {
         },
         (ctx) => {
             ctx.wizard.state.team = ctx.message.text;
-            connection.query(`SELECT * FROM schedule WHERE team = '${ctx.wizard.state.team}'`, (err, res) => {
+            connection.query(`SELECT * FROM schedule WHERE team = '${ctx.wizard.state.team.toLowerCase()}'`, (err, res) => {
                 if (res[0] == undefined) {
-                    ctx.reply("Ну ка пшол отсюда, нет тут твоей команды дэбилов");
+                    ctx.replyWithHTML("❗️ Вашей команды нет в списке\n\n🔹<b>Выбери, что нужно:</b>");
                     ctx.scene.leave();
                 }
                 else {
-                    ctx.replyWithHTML(`Ваше время: <b>${res[0].time}</b>\nВаше направление: <b>${res[0].data}</b>`);
+                    ctx.replyWithHTML(`Ваше время: <b>${res[0].time}</b>\nВаше направление: <b>${res[0].data}</b>\n\n🔹<b>Выбери, что нужно:</b>`);
                     ctx.scene.leave();
                 }
             });
