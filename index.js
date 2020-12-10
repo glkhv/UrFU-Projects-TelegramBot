@@ -75,7 +75,7 @@ setInterval(() => {
   
   connection.query("SELECT time FROM `notifications`", (err, res) => {
     res.forEach(item => {
-      if(time == item.time){
+      if((item.time - time) == 0){
         telegram.sendMessage(739870817, item.text);
       }
     });
