@@ -7,10 +7,10 @@ const mysql = require("mysql");
 const { leave } = Stage;
 
 const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "root",
-  database: "practice",
+  socketPath: "/var/run/mysqld/mysqld.sock",
+  user: "c27887_urfu_bot_ru",
+  password: "QuJnuYirwawub45",
+  database: "c27887_urfu_bot_ru",
 });
 
 connection.query("SET SESSION wait_timeout = 604800");
